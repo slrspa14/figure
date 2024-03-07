@@ -96,55 +96,78 @@ namespace WPF
             //Cv2.ImWrite("./Capture.png", frame);
             //string save = DateTime.Now.ToString("yyyy-MM-dd-hh시mm분ss초");
             //Cv2.ImWrite("./" + save + ".png", frame);
-            lbl.Content = "캡처";
+            lbl.Content = "불량";
             //recodetest.Write(frame);//오류
         }
-
-        private void timer_tick(object sender, EventArgs e)
+        private string GetShape(Point[] c)//형상구분
         {
-            //// 0번 장비로 생성된 VideoCapture 객체에서 frame을 읽어옴
-            //cam.Read(frame);
-            //// 읽어온 Mat 데이터를 Bitmap 데이터로 변경 후 컨트롤에 그려줌
-            //Cam.Source = OpenCvSharp.WpfExtensions.WriteableBitmapConverter.ToWriteableBitmap(frame);
-            frame = new Mat(); //
-            cam.Read(frame); //입력할거
+            string shape = "unidentified";
+            double peri = Cv2.ArcLength(c, true);
+            Point[] approx = Cv2.ApproxPolyDP(c, 0.04 * peri, true);
 
-            Mat test = new Mat(); //출력 할거
-            Cv2.CvtColor(frame, test, ColorConversionCodes.BGR2HSV);
-            //             입력   출력  변환식              
-
-            Mat color = new Mat();
-
-            Cv2.InRange(test, new Scalar(0, 100, 100), new Scalar(360 / 2, 255, 255), color);//색깔 범위
-
-            Mat result = new Mat();
-            Cv2.BitwiseAnd(frame, frame, result, color);
-
-
-            //Mat yellow = new Mat();
-            Mat dst = result.Clone();
-
-            Point[][] contours;
-            HierarchyIndex[] hierarchy;
-
-
-            Cv2.FindContours(color, out contours, out hierarchy, RetrievalModes.Tree, ContourApproximationModes.ApproxTC89KCOS);
-
-            List<Point[]> new_contours = new List<Point[]>();
-            foreach (Point[] p in contours)
+            if (approx.Length == 3) //변이 3개면 삼각형을 표시
             {
-                double length = Cv2.ArcLength(p, true);
-                if (length > 100)
-                {
-                    new_contours.Add(p);
-                }
+                shape = "triangle";
             }
+            else if (approx.Length == 4)//변이 4개면 사각형을 표시
+            {
+                OpenCvSharp.Rect rect;
+                rect = Cv2.BoundingRect(approx);
+                double ar = rect.Width / (double)rect.Height;
 
-            Cv2.DrawContours(dst, new_contours, -1, new Scalar(255, 0, 0), 2, LineTypes.AntiAlias, null, 1);
+                if (ar >= 0.95 && ar <= 1.05) shape = "square";
+                else shape = "rectangle";
+            }
+            else if (approx.Length == 5)//오각형
+            {
+                shape = "pentagon";
+            }
+            else//그 외의 것들은 원으로 일단 처리
+            {
+                shape = "circle";
+            }
+            return shape;
+        }
+        private void timer_tick(object sender, EventArgs e)//출력용
+        {
+            //frame = new Mat(); //
+            //cam.Read(frame); //입력할거
 
+            //Mat test = new Mat(); //출력 할거
+            //Cv2.CvtColor(frame, test, ColorConversionCodes.BGR2HSV);
+
+            //Mat color = new Mat();
+
+            //Cv2.InRange(test, new Scalar(0, 100, 100), new Scalar(360 / 2, 255, 255), color);
+
+            //Mat result = new Mat();
+            //Cv2.BitwiseAnd(frame, frame, result, color);
+            //Mat dst = result.Clone();
+
+            //Point[][] contours;
+            //HierarchyIndex[] hierarchy;
+
+            //Cv2.FindContours(color, out contours, out hierarchy, RetrievalModes.Tree, ContourApproximationModes.ApproxTC89KCOS);
+
+            //List<Point[]> new_contours = new List<Point[]>();
+            //foreach (Point[] p in contours)
+            //{
+            //    double length = Cv2.ArcLength(p, true);
+            //    if (length > 100)
+            //    {
+            //        Moments m = Cv2.Moments(p);
+            //        Point pnt = new Point(m.M10 / m.M00, m.M01 / m.M00); //center point
+            //        Cv2.Circle(dst, pnt, 5, Scalar.Red, -1);
+            //        string shape = GetShape(p); //*형상구분
+            //        Cv2.PutText(dst, shape, pnt, HersheyFonts.HersheySimplex, 0.5, Scalar.White, 2);
+            //        new_contours.Add(p);
+            //    }
+            //}
+
+            // 0번 장비로 생성된 VideoCapture 객체에서 frame을 읽어옴
+            cam.Read(frame);
             // 읽어온 Mat 데이터를 Bitmap 데이터로 변경 후 컨트롤에 그려줌
-            Cam.Source = OpenCvSharp.WpfExtensions.WriteableBitmapConverter.ToWriteableBitmap(dst);
-
+            Cam.Source = OpenCvSharp.WpfExtensions.WriteableBitmapConverter.ToWriteableBitmap(frame);
         }
     }
 }
