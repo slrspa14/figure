@@ -7,13 +7,11 @@
         Loaded="windows_loaded"
         mc:Ignorable="d"
         Title="MainWindow" Height="400" Width="600">
-    <TabControl>
-        <Grid>
+    <Grid>
             <Image Name="Cam" Margin="20,10,305,159"/>
-            <Image Name="cam_test" Margin="315,41,10,159"/>
+            <Image Name="Cam_capture" Margin="305,10,10,159"/>
             <Button x:Name="start_btn" Content="도형" HorizontalAlignment="Left" Margin="20,208,0,0" VerticalAlignment="Top" Width="129" Height="82" Click="Button_Click"/>
             <Label x:Name="lbl" Content="" HorizontalAlignment="Left" Margin="166,208,0,0" VerticalAlignment="Top" Height="82" Width="199"/>
-        </Grid>
-    </TabControl>
-    
+    </Grid>
+
 </Window>

@@ -15,6 +15,10 @@ using System.Windows.Shapes;
 using System.Drawing;
 using System.Numerics;
 using System.Windows.Forms;
+//tcp
+using System.Net;
+using System.Net.Sockets;
+using System.Diagnostics;
 
 // OpenCV 사용을 위한 using
 
@@ -34,14 +38,13 @@ namespace WPF
         VideoCapture cam;
         Mat frame, test;
         DispatcherTimer timer;
-        bool is_initCam, is_initTimer, A = true;
-
-
-        public MainWindow()
+        bool is_initCam, is_initTimer;
+        
+        
+        public MainWindow() 
         {
             InitializeComponent();
         }
-
         private void windows_loaded(object sender, RoutedEventArgs e)
         {
             // 카메라, 타이머(0.01ms 간격) 초기화
@@ -71,7 +74,6 @@ namespace WPF
 
         private bool init_camera()
         {
-
             try
             {
                 // 0번 카메라로 VideoCapture 생성 (카메라가 없으면 안됨)
@@ -126,17 +128,12 @@ namespace WPF
         private void Button_Click(object sender, RoutedEventArgs e)
         {
 
-            Cam_capture.Source = OpenCvSharp.WpfExtensions.WriteableBitmapConverter.ToWriteableBitmap(frame);
-
-            string save = DateTime.Now.ToString("yyyy-MM-dd-hh시mm분ss초");            // 현재 시간
+            Cam_cpature.Source = OpenCvSharp.WpfExtensions.WriteableBitmapConverter.ToWriteableBitmap(frame);
+            string save = DateTime.Now.ToString("yyyy-MM-dd-hh시mm분ss초");// 현재 시간
             Cv2.ImWrite("../../" + save + ".png", frame);
             VideoWriter recodetest = new VideoWriter("./" + save + ".avi", FourCC.XVID, 24, frame.Size());
-
-
-
         }
-
-
+        
 
         private void timer_tick(object sender, EventArgs e)
         {
@@ -234,8 +231,77 @@ namespace WPF
                     Cv2.PutText(frame, pnt + " Blue " + shape, new Point(cx, cy), HersheyFonts.HersheySimplex, 0.5, Scalar.Blue, 2);
                     blu++;
                 }
+
             }
+
             Cam.Source = OpenCvSharp.WpfExtensions.WriteableBitmapConverter.ToWriteableBitmap(frame); //첫화면 출력
+            string server_ip = "10.10.20.102";
+            int server_port = 33224;
+            string client_ip = "127.0.0.1";
+            int client_port = 10000;
+            try
+            {
+                IPEndPoint serveraddress = new IPEndPoint(IPAddress.Parse(server_ip), server_port);
+                IPEndPoint clientaddress = new IPEndPoint(IPAddress.Parse(client_ip), client_port);
+                //IPEndPoint tlqkf = new IPEndPoint(IPAddress.Parse(server_ip), server_port);
+                //System.Windows.MessageBox.Show($"{clientaddress.ToString()}, {serveraddress.ToString()}");
+
+                TcpClient client = new TcpClient(clientaddress);
+                //접속에러
+                client.Connect(serveraddress);
+                System.Windows.MessageBox.Show("서버접속성공");
+
+                string message = "1/1번라인";
+                byte[] test = System.Text.Encoding.Default.GetBytes(message);
+                NetworkStream stream = client.GetStream();
+                stream.Write(test, 0, test.Length);
+
+                byte[] data = new byte[256];
+                string recv_data = "";
+                int bytes = stream.Read(data, 0, data.Length);
+                recv_data = Encoding.Default.GetString(data, 0, bytes);
+                System.Windows.MessageBox.Show(recv_data);
+                switch(recv_data)
+                {
+                    case "1/":
+                        {
+                            //네모빨강
+                            System.Windows.MessageBox.Show("1번");
+                            break;
+                        }
+
+                    case "2":
+                        //노랑원
+                        System.Windows.MessageBox.Show("2번");
+                        break;
+                    case "3":
+                        //초록 세모
+                        System.Windows.MessageBox.Show("3번");
+                        break;
+                    case "4":
+                        //파랑오각
+                        System.Windows.MessageBox.Show("4번");
+                        break;
+                    case "5":
+                        //네모빨강
+                        System.Windows.MessageBox.Show("5번");
+                        break;
+                    case "6":
+                        //노랑 원
+                        System.Windows.MessageBox.Show("6번");
+                        break;
+                    case "7":
+                        System.Windows.MessageBox.Show("7번");
+                        break;
+                    default:
+                        break;
+                        //초록 세모
+                }
+            }
+            catch (SocketException ae)
+            {
+                Console.WriteLine(ae);
+            }
         }
     }
 }
